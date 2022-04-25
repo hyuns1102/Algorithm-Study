@@ -1,4 +1,3 @@
-
 def move(arr, row, col, speed, direct, size):
     if direct == 1:
         row -= speed % ((R - 1) * 2)
@@ -47,7 +46,7 @@ def move(arr, row, col, speed, direct, size):
 if __name__ == "__main__":
     R, C, M = map(int, input().split())
     info = [list(map(int, input().split())) for _ in range(M)]
-    graph = [[0] * (C+1) for _ in range(R+1)]
+    graph = [[0] * (C + 1) for _ in range(R + 1)]
 
     for r, c, s, d, z in info:
         graph[r][c] = [s, d, z]
@@ -60,7 +59,7 @@ if __name__ == "__main__":
         person_col += 1
 
         # get shark
-        for r in range(1, R+1):
+        for r in range(1, R + 1):
             if graph[r][person_col]:
                 s, d, z = graph[r][person_col]
                 answer += z
@@ -72,14 +71,12 @@ if __name__ == "__main__":
             break
 
         # move shark
-        new_graph = [[0] * (C+1) for _ in range(R+1)]
-        for x in range(R+1):
-            for y in range(C+1):
+        new_graph = [[0] * (C + 1) for _ in range(R + 1)]
+        for x in range(R + 1):
+            for y in range(C + 1):
                 if graph[x][y]:
                     s, d, z = graph[x][y]
                     M -= move(new_graph, x, y, s, d, z)
         graph = [item[:] for item in new_graph]
 
     print(answer)
-
-
