@@ -101,4 +101,59 @@
 #     print(answer)
 
 
-# 전치행렬 이용해서 다시 ㄱ
+# 전치행렬 이용
+from collections import Counter
+
+
+def arr_calculate(arr):
+
+    new_arr = []
+    max_size = -1
+
+    # sort
+    for lst in arr:
+        sort_lst, new_lst = [], []
+        for num, cnt in Counter(lst).items():
+            if num != 0:
+                sort_lst.append([num, cnt])
+        sort_lst = sorted(sort_lst, key=lambda x: (x[1], x[0]))
+
+        for pair in sort_lst:
+            new_lst.extend(pair)
+
+        max_size = max(len(new_lst), max_size)
+        max_size = 100 if max_size > 100 else max_size
+        new_arr.append(new_lst)
+
+    # zero ped
+    for idx, lst in enumerate(new_arr):
+        if len(lst) < max_size:
+            lst = lst[:] + [0] * (max_size - len(lst))
+        else:
+            lst = lst[:max_size]
+        new_arr[idx] = lst
+
+    return new_arr
+
+
+if __name__ == "__main__":
+    r, c, k = map(int, input().split())
+    graph = [list(map(int, input().split())) for _ in range(3)]
+
+    T = 0
+    answer = -1
+    if r-1 < len(graph) and c-1 < len(graph[0]) and graph[r-1][c-1] == k:
+        answer = T
+    else:
+        while T < 100:
+            T += 1
+            if len(graph) >= len(graph[0]):  # R 연산
+                graph = arr_calculate(graph)
+            else:
+                graph = arr_calculate(zip(*graph))
+                graph = [item[:] for item in zip(*graph)]
+            if r-1 < len(graph) and c-1 < len(graph[0]) and graph[r-1][c-1] == k:
+                answer = T
+                break
+
+    print(answer)
