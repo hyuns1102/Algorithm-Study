@@ -2,77 +2,136 @@ import sys
 sys.stdin = open("input_5653.txt", "r")
 
 T = int(input())
-# 여러개의 테스트 케이스가 주어지므로, 각각을 처리 합니다.
 
 
-def stretch_graph(origin, state, change):
-    new_originGraph = [[0] * len(origin[0])+2 for _ in range(len(origin)+2)]
-    new_stateGraph = [[0] * len(origin[0]) + 2 for _ in range(len(origin) + 2)]
-    new_changeGraph = [[0] * len(origin[0]) + 2 for _ in range(len(origin) + 2)]
+def update_status():
+    spread_coord = []
+    for x in range(len(graph)):
+        for y in range(len(graph[x])):
+            if graph[x][y][2] == 0:  # no cell
+                continue
 
-    for i in range(1, len(new_originGraph)-1):
-        for j in range(1, len(new_originGraph[i])-1):
-            new_originGraph[i][j] = origin[i-1][j-1]
-            new_stateGraph[i][j] = state[i-1][j-1]
-            new_changeGraph[i][j] = change[i-1][j-1]
+            graph[x][y][1] += 1  # time update
 
-    return new_originGraph, new_stateGraph, new_changeGraph
+            # update status
+            if graph[x][y][0] == 1 and graph[x][y][1] == graph[x][y][2]:  # 비활성 -> 활성 상태
+                graph[x][y][0] = 2
+
+            elif graph[x][y][0] == 2 and graph[x][y][1] == graph[x][y][2] + 1:  # 활성 -> 번식 시작
+                spread_coord.append([x, y])
+
+            if graph[x][y][0] == 2 and graph[x][y][1] >= 2 * graph[x][y][2]:  # 활성 -> 죽음
+                graph[x][y][0] = 0
+
+    return spread_coord
 
 
-def breeding_cell(x, y, origin, state, change):
+def stretch_graph(n_graph, n_visit, flag):
+    new_N, new_M = len(n_graph), len(n_graph[0])
+    if flag == 0:
+        n_graph += [[[0, 0, 0]] * new_M]
+        n_visit += [[False] * new_M]
+    elif flag == 1:
+        for row in range(new_N):
+            n_graph[row] += [[0, 0, 0]]
+            n_visit[row] += [False]
+    elif flag == 2:
+
+        n_graph = [[[0, 0, 0]] * new_M] + n_graph
+        n_visit = [[False] * new_M] + n_visit
+    else:
+        for row in range(new_N):
+            n_graph[row] = [[0, 0, 0]] + n_graph[row]
+            n_visit[row] = [False] + n_visit[row]
+
+    return n_graph, n_visit
+
+
+def spread_cell(graph, coord, n_visit):
     dx = [0, 1, 0, -1]
     dy = [1, 0, -1, 0]
 
-    for mode in range(4):
-        mx, my = x + dx[mode], y + dy[mode]
-        if mx < 0 or mx >= len(origin) or my < 0 or my >= len(origin[0]):
-            origin, state, change = stretch_graph(origin, state, change)
-        if state_graph[mx][my] == 0:
-            change[mx][my] = max(change[mx][my], change[x][y])
+    new_graph = [item[:] for item in graph]
+    new_coord = coord[:]
+
+    origin_N, origin_M = len(graph), len(graph[0])
+    flag1 = flag2 = flag3 = flag4 = False
+    # 배열 크기 증가
+    for x, y in coord:
+        if flag1 and flag2 and flag3 and flag4:
+            break
+        for i in range(4):
+            mx, my = x + dx[i], y + dy[i]
+
+            # x 가 끄트머리일 때,
+            if mx == origin_N and not flag1:
+                new_graph, n_visit = stretch_graph(new_graph, n_visit, 0)
+                flag1 = True
+
+            # y 가 끄트머리일 때,
+            elif my == origin_M and not flag2:
+                new_graph, n_visit = stretch_graph(new_graph, n_visit, 1)
+                flag2 = True
+
+            # x 가 0일 때
+            elif mx == -1 and not flag3:
+                new_graph, n_visit = stretch_graph(new_graph, n_visit, 2)
+                new_coord = [[cx + 1, cy] for cx, cy in new_coord]
+                flag3 = True
+            elif my == -1 and not flag4:
+                new_graph, n_visit = stretch_graph(new_graph, n_visit, 3)
+                new_coord = [[cx, cy + 1] for cx, cy in new_coord]
+                flag4 = True
+
+    # 생명력 비교 후, 번식
+    for x, y in new_coord:
+        for i in range(4):
+            mx, my = x + dx[i], y + dy[i]
+            if not n_visit[mx][my] and new_graph[mx][my][2] <= new_graph[x][y][2]:
+                new_graph[mx][my] = [1, 0, new_graph[x][y][2]]
+
+    return new_graph, n_visit
 
 
-def update_state(state):
-    for i in range(len(state)):
-        for j in range(len(state[i])):
-            if original_graph[i][j] > 0 and state_graph[i][j] == 0:
-                state_graph[i][j] = -1
+def update_visit(n_visit):
+
+    for x in range(len(graph)):
+        for y in range(len(graph[0])):
+            if graph[x][y][2] > 0:
+                n_visit[x][y] = True
+
+
+def count_cell():
+    all_cnt = 0
+    for x in range(len(graph)):
+        for y in range(len(graph[x])):
+            if graph[x][y][0] > 0 and graph[x][y][2] > 0:
+                all_cnt += 1
+    return all_cnt
 
 
 for test_case in range(1, T + 1):
-    N, M, K = map(int, input().split())
-    original_graph = [list(map(int, input().split())) for _ in range(M)]  # 기본 생명력
-    change_graph = [item[:] for item in original_graph]  # 생명력 변화 표
-    state_graph = [[0] * N for _ in range(M)]  # -1: 비활성, 0: 아무것도 아님 or 번식된 애 or 죽음, 1: 활성
+    N, M, K = map(int, input().split())  # K 배양 시간
+    graph = [list(map(int, input().split())) for _ in range(N)]
+    visit = [[False] * M for _ in range(N)]
 
-    update_state(state_graph)
-    while K != 0:  # change_time
-        K -= 1
-        breeding_list = []
+    # K 시간 후, 살아있는 줄기세포 ( 비활성 + 활성 )
+    # 초기 배열 [ 상태, 시간, 생명력 수치 ] 로 변경
+    # 초기 상태 , 죽은 상태 : 0, 비활성 상태 : 1, 활성 상태 : 2
+    for x in range(N):
+        for y in range(M):
+            lst = [0, 0, 0]
+            if graph[x][y] != 0:
+                lst = [1, 0, graph[x][y]]
+                visit[x][y] = True
+            graph[x][y] = lst
 
-        for i in range(len(original_graph)):
-            for j in range(len(original_graph[i])):
-                if change_graph[i][j] >= 1:  # 생명력이 있을 경우,
+    time = 0
+    while time != K:
+        time += 1
+        coord = update_status()  # graph 소요시간 증가, 상태 update, 번식할 애들 좌표 가져오기
+        graph, visit = spread_cell(graph, coord, visit)  # 번식하기 ( 배열 늘리기, 번식하기 )
+        update_visit(visit)  # 활성, 비활성 cell 가져오기
 
-                    if state_graph[i][j] == 1 and original_graph[i][j] == change_graph[i][j]:  # 활성이고 생명력 그래프와 같을 경우,
-                        breeding_cell(i, j, original_graph, state_graph, change_graph)  # 번식, 생명력 비교 후, change_graph 변화
-                    elif state_graph[i][j] != 0:
-                        change_graph[i][j] -= 1  # 생명력 감소
+    print(f"#{test_case} {count_cell()}")
 
-                elif change_graph[i][j] == 0:  # 생명력이 없을 경우,
-
-                    if state_graph[i][j] == -1:  # 비활성 경우
-                        change_graph[i][j] = original_graph[i][j]  # 생명력 복귀
-                        state_graph[i][j] = 1
-                    elif state_graph[i][j] == 1:  # 활성 경우
-                        change_graph[i][j] = -1
-                        state_graph[i][j] = 0
-
-        original_graph = [item[:] for item in change_graph]  # 생명력 변화 표
-        update_state(state_graph)
-
-    sum_state = 0
-    for i in range(len(state_graph)):
-        for j in range(len(state_graph[0])):
-            if state_graph[i][j] == 1 or state_graph[i][j] == -1:
-                sum_state += 1
-    print(f"# {sum_state}")
