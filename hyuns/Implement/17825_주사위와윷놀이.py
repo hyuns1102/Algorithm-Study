@@ -11,9 +11,7 @@ def dfs(player, player_path, all_sum, d_num):
             continue
 
         step = dice[d_num]  # 주사위 step
-
         line = board[board_idx]  # 현재 라인
-
         next_idx = now_idx + step  # 다음 위치
         next_num = 0
 
@@ -33,25 +31,25 @@ def dfs(player, player_path, all_sum, d_num):
                 elif next_num == 30:
                     board_idx, next_idx = 3, 0
 
-        # 다음 위치에 player가 있는지 검증, 도착 검증 x, 라인이랑 인덱스 일치 시, 분기점 체크
+        # 다음 위치에 player 있는지 검증, 도착 검증 x, 라인이랑 인덱스 일치 시, 분기점 체크
         same = False
         if next_idx != -1:
             for d in range(4):
                 visit_idx, visit_path = player[d], player_path[d]
-                if visit_idx == -1: continue
-                if d != i and next_num == board[visit_path][visit_idx]:
-                    if next_num == 30:
-                        if visit_path == 3 and board_idx == 3 and next_idx == 0 and visit_idx == 0:
-                            same = True
-                            break
-                        elif visit_path != 3 and board_idx != 3 and next_idx != 0 and visit_idx != 0:
-                            same = True
-                            break
-                    elif next_num in [16, 22, 24, 26, 28]:
-                        if visit_path == board_idx and visit_idx == next_idx:
-                            same = True
-                            break
-                    else:
+                if d == i or visit_idx == -1:
+                    continue
+
+                # 좌표가 같으면 무조건 out!
+                if visit_idx == next_idx and visit_path == board_idx:
+                    same = True
+                    break
+
+                # 좌표가 다른데 같은 숫자라면? (16, 22, 24, 26, 28) - 다름 / 30 / 10, 20, 30, 25, 35, 40
+                elif board[visit_path][visit_idx] == next_num:
+                    if next_num in (10, 20, 25, 35, 40):
+                        same = True
+                        break
+                    elif next_num == 30 and next_idx != 0 and visit_idx != 0:
                         same = True
                         break
 
@@ -75,4 +73,3 @@ if __name__ == "__main__":
     dfs(player_direction, [0, 0, 0, 0], 0, 0)
 
     print(answer)
-
