@@ -8,6 +8,10 @@ def move_shark(graph, direct):
 
     update_graph = [item[:] for item in graph]
 
+    # 시뮬레이션 시,
+    # 점검은 원본 그래프로
+    # 이동은 새로운 그래프로
+
     for x in range(len(graph)):
         for y in range(len(graph[x])):
 
@@ -42,8 +46,6 @@ def move_shark(graph, direct):
                     d, mx, my = p_flag2
                     s_direct = d
                     update_graph[mx][my] = [k, s_num, True]
-                else:
-                    print("check")
 
                 # 조건에 만족하면, 상어 방향 update, 상어 현 위치 업데이트
                 direct[s_num] = s_direct
